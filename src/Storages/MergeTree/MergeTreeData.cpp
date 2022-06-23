@@ -2799,7 +2799,7 @@ bool MergeTreeData::renameTempPartAndAdd(
     DataPartsVector covered_parts;
     {
         auto lock = lockParts();
-        if (!renameTempPartAndReplace(part, txn, increment, out_transaction, lock, &covered_parts, deduplication_log, deduplication_token))
+        if (!renameTempPartAndReplaceImpl(part, txn, increment, out_transaction, lock, &covered_parts, deduplication_log, deduplication_token))
             return false;
     }
     if (!covered_parts.empty())
@@ -2810,7 +2810,7 @@ bool MergeTreeData::renameTempPartAndAdd(
 }
 
 
-bool MergeTreeData::renameTempPartAndReplace(
+bool MergeTreeData::renameTempPartAndReplaceImpl(
     MutableDataPartPtr & part,
     MergeTreeTransaction * txn,
     SimpleIncrement * increment,
@@ -2960,7 +2960,7 @@ bool MergeTreeData::renameTempPartAndReplace(
 
 MergeTreeData::DataPartsVector MergeTreeData::renameTempPartAndReplace(
     MutableDataPartPtr & part, MergeTreeTransaction * txn, SimpleIncrement * increment,
-    Transaction * out_transaction, MergeTreeDeduplicationLog * deduplication_log)
+    Transaction * out_transaction, MergeTreeDeduplicationLog * deduplication_log, DataPartsLock * lock)
 {
     if (out_transaction && &out_transaction->data != this)
         throw Exception("MergeTreeData::Transaction for one table cannot be used with another. It is a bug.",
@@ -2968,8 +2968,15 @@ MergeTreeData::DataPartsVector MergeTreeData::renameTempPartAndReplace(
 
     DataPartsVector covered_parts;
     {
-        auto lock = lockParts();
-        renameTempPartAndReplace(part, txn, increment, out_transaction, lock, &covered_parts, deduplication_log);
+        if (!lock)
+        {
+            auto part_lock = lockParts();
+            renameTempPartAndReplaceImpl(part, txn, increment, out_transaction, part_lock, &covered_parts, deduplication_log);
+        }
+        else
+        {
+            renameTempPartAndReplaceImpl(part, txn, increment, out_transaction, *lock, &covered_parts, deduplication_log);
+        }
     }
     return covered_parts;
 }

@@ -6604,7 +6604,7 @@ void StorageReplicatedMergeTree::replacePartitionFrom(
                 auto data_parts_lock = lockParts();
 
                 for (MutableDataPartPtr & part : dst_parts)
-                    renameTempPartAndReplace(part, query_context->getCurrentTransaction().get(), nullptr, &transaction, data_parts_lock);
+                    renameTempPartAndReplace(part, query_context->getCurrentTransaction().get(), nullptr, &transaction, nullptr, &data_parts_lock);
             }
 
             for (size_t i = 0; i < dst_parts.size(); ++i)
