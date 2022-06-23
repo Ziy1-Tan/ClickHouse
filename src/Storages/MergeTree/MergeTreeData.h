@@ -557,8 +557,8 @@ public:
     bool renameTempPartAndAdd(
         MutableDataPartPtr & part,
         MergeTreeTransaction * txn,
+        Transaction & transaction,
         SimpleIncrement * increment = nullptr,
-        Transaction * out_transaction = nullptr,
         MergeTreeDeduplicationLog * deduplication_log = nullptr,
         std::string_view deduplication_token = std::string_view());
 
@@ -566,8 +566,12 @@ public:
     /// Returns all parts covered by the added part (in ascending order).
     /// If out_transaction == nullptr, marks covered parts as Outdated.
     DataPartsVector renameTempPartAndReplace(
-        MutableDataPartPtr & part, MergeTreeTransaction * txn, SimpleIncrement * increment = nullptr,
-        Transaction * out_transaction = nullptr, MergeTreeDeduplicationLog * deduplication_log = nullptr, DataPartsLock * lock = nullptr);
+        MutableDataPartPtr & part,
+        MergeTreeTransaction * txn,
+        Transaction & out_transaction,
+        SimpleIncrement * increment = nullptr,
+        MergeTreeDeduplicationLog * deduplication_log = nullptr,
+        DataPartsLock * lock = nullptr);
 
     /// Remove parts from working set immediately (without wait for background
     /// process). Transfer part state to temporary. Have very limited usage only
@@ -1246,7 +1250,7 @@ private:
         MutableDataPartPtr & part,
         MergeTreeTransaction * txn,
         SimpleIncrement * increment,
-        Transaction * out_transaction,
+        Transaction & out_transaction,
         DataPartsLock & lock,
         DataPartsVector * out_covered_parts = nullptr,
         MergeTreeDeduplicationLog * deduplication_log = nullptr,
